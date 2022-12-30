@@ -1,0 +1,71 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
+  id 'maven-publish'
+}
+
+sourceCompatibility = 19
+targetCompatibility = 19
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': "${project.main}"
+    }
+}
+
+application {
+    mainClass = "${project.main}"
+}
+
+configurations {
+    shadow.extendsFrom(runtimeClasspath)
+}
+
+shadowJar {
+    archiveClassifier.set('')
+}
+
+dependencies {
+    implementation("commons-io:commons-io:${project.commonsio_version}")
+    implementation("org.slf4j:slf4j-log4j12:${project.slf4j_version}")
+    implementation("com.google.code.gson:gson:${project.gson_version}")
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}"}
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 19
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/${project.gitRepository}"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
